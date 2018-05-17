@@ -34,7 +34,6 @@ $(MMCU).hex:	$(MMCU).axf
 
 
 clean:
-	$(RM) hostparser
 	$(RM) *.o
 	$(RM) *.hex
 	$(RM) *.axf

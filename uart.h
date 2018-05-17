@@ -6,7 +6,7 @@
 #include <avr/io.h>
 
 #define F_CPU 16000000
-#define BAUD 9600
+#define BAUD 57600
 #include <util/setbaud.h>
 
 // if true, the UART-readline will echo
