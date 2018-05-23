@@ -25,7 +25,7 @@ inline uint8_t read_ledenable() {
 
 // set the laser on / off
 inline void set_laser( uint8_t state ) {
-    if (state) {
+    if (!state) {
 	PORTD |= (1<<PD7);	// digital 7 on the Arduino
     } else {
 	PORTD &= ~(1<<PD7);
@@ -83,6 +83,8 @@ int main() {
     PORTD=0x00;
     DDRD=0xff; 
 
+    set_laser(0);
+
 
     // endless loop running our commands
     while (1) {
@@ -100,6 +102,8 @@ int main() {
 	// while the camera is on exposure ....
 	
 	uint8_t last_led_state = read_ledenable();
+	uint16_t light_count   = 0;
+
 	while ( read_camera() ) {
 	    
 	    // read out the LED_ENABLE state from the SLM
@@ -110,6 +114,14 @@ int main() {
 		set_laser( led_state);
 		last_led_state = led_state;
 		UDR0 = (led_state)?('1'):('0');
+	    
+		// if the laser has been turned on twice, retrigger the SLM
+		light_count++;
+		if (light_count == 4) {
+		    light_count =0;
+		    _delay_us(75);
+		    send_trigger(); 
+		}
 	    }
 	}
 
