@@ -33,14 +33,7 @@ void set_laser( uint8_t state ) {
 }
 
 
-// set control LED on pin 4 on / ogg
-void set_cLed4( uint8_t state ) {
-    if (state) {
-	PORTD |= (1<<PD4);	// digital 7 on the Arduino
-    } else {
-	PORTD &= ~(1<<PD4);
-    }
-}
+
 
 // set control LED on pin 5 on / ogg
 void set_cLed5( uint8_t state ) {
@@ -90,9 +83,9 @@ int main() {
     while (1) {
 
 	// wait for the camera to go to 'exposure'
-	set_cLed4(1);
+	set_cLed5(1);
 	while ( ! read_camera() ) {};	
-	set_cLed4(0);
+	set_cLed5(0);
 
 	// trigger the SLM
 	send_trigger();
