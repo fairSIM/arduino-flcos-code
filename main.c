@@ -25,7 +25,7 @@ uint8_t read_ledenable() {
 
 // set the laser on / off
 void set_laser( uint8_t state ) {
-    if (!state) {
+    if (state) {
 	PORTD |= (1<<PD7);	// digital 7 on the Arduino
     } else {
 	PORTD &= ~(1<<PD7);
@@ -38,7 +38,7 @@ void set_laser( uint8_t state ) {
 // set control LED on pin 5 on / ogg
 void set_cLed5( uint8_t state ) {
     if (state) {
-	PORTD |= (1<<PD5);	// digital 7 on the Arduino
+	PORTD |= (1<<PD5);	// digital 5 on the Arduino
     } else {
 	PORTD &= ~(1<<PD5);
     }
@@ -46,7 +46,7 @@ void set_cLed5( uint8_t state ) {
 
 // send a pulse to 'trigger' SLM
 static void send_trigger() {
-    PORTD |= (1<<PD2);
+    PORTD |= (1<<PD2);		// digital 2 on the Arduino
     _delay_us(50);
     PORTD &= ~(1<<PD2);
 }
@@ -54,7 +54,7 @@ static void send_trigger() {
 
 // send a pulse to 'finish' SLM
 static void send_finish() {
-    PORTD |= (1<<PD3);
+    PORTD |= (1<<PD3);		// digital 3 on the Arduino
     _delay_us(50);
     PORTD &= ~(1<<PD3);
 }
