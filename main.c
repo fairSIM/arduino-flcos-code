@@ -33,14 +33,7 @@ inline void set_laser( uint8_t state ) {
 }
 
 
-// set control LED on pin 4 on / ogg
-inline void set_cLed4( uint8_t state ) {
-    if (state) {
-	PORTD |= (1<<PD4);	// digital 7 on the Arduino
-    } else {
-	PORTD &= ~(1<<PD4);
-    }
-}
+
 
 // set control LED on pin 5 on / ogg
 inline void set_cLed5( uint8_t state ) {
@@ -66,7 +59,14 @@ static inline void send_finish() {
     PORTD &= ~(1<<PD3);
 }
 
-
+// set SLM seq. on / off
+inline void set_slm_state( uint8_t state ) {
+    if (state) {
+	PORTD |= (1<<PD4);	// digital 7 on the Arduino
+    } else {
+	PORTD &= ~(1<<PD4);
+    }
+}
 
 int main() {
 
@@ -74,6 +74,10 @@ int main() {
     init_uart();
     _term_echo = 1;
     stdout=&uartstdout;
+
+    // configure timer0, normal mode, clk/1024
+    TCCR1B = 0x00;
+    TCCR1B = (1<<CS12) | (1<<CS10);
   
     // set PORTC to input, no pullup
     PORTC=0x00;
@@ -83,16 +87,43 @@ int main() {
     PORTD=0x00;
     DDRD=0xff; 
 
+    // make sure the laser is off
     set_laser(0);
 
+    // start the slm sequence
+    set_slm_state(1);
 
     // endless loop running our commands
     while (1) {
 
 	// wait for the camera to go to 'exposure'
-	set_cLed4(1);
-	while ( ! read_camera() ) {};	
-	set_cLed4(0);
+	set_cLed5(1);
+
+	// reset timer 1
+	TCNT1L=0x00;
+	TCNT1H=0x00;	
+	uint8_t slm_reset = 0;
+	while ( ! read_camera() ) {
+
+	    // if we are waiting for longer then 
+	    // 16MHz / 1024 (timer) / 256 (low bits) / 60
+	    // -> approx 1 second, we are resetting the SLM
+	    if ( TCNT1H > 63 && !slm_reset) {
+		set_slm_state(0);
+		for ( uint8_t  i=0; i<10; i++){
+		    set_cLed5( i%2);
+		    _delay_ms(100);
+		}
+		set_slm_state(1);			
+		for ( uint8_t  i=0; i<10; i++){
+		    set_cLed5( i%2);
+		    _delay_ms(100);
+		}
+		slm_reset = 1;
+		set_cLed5(1);
+	    }
+	};	
+	set_cLed5(0);
 
 	// trigger the SLM
 	send_trigger();
@@ -134,6 +165,8 @@ int main() {
 	UDR0='\n';
 	loop_until_bit_is_set(UCSR0A, UDRE0);
 	UDR0='\r';
+
+
 	
     }
 
