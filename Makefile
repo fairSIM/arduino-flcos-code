@@ -26,7 +26,7 @@ $(MMCU).axf:  $(SOURCES)
 			-Wl,--undefined=_mmcu,--section-start=.mmcu=0x910000 \
 			-I./simavr/simavr/sim/avr  \
 			$^  -o $@
-	avr-size -C --mcu=$(MMCU) $@
+	avr-size $@
 
 # object-copy into hex file
 $(MMCU).hex:	$(MMCU).axf

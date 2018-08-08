@@ -12,19 +12,19 @@ static FILE uartstdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE
 
 
 // read the camera 'exposure' pin
-inline uint8_t read_camera() {
+uint8_t read_camera() {
     return (PINC & (1<<PC0));	// A0 on the Arduino
 }
 
 
 // read the SLM 'LED enable' pin
-inline uint8_t read_ledenable() {
+uint8_t read_ledenable() {
     return (PINC & (1<<PC5));	// A5 on the Arduino
 }
 
 
 // set the laser on / off
-inline void set_laser( uint8_t state ) {
+void set_laser( uint8_t state ) {
     if (!state) {
 	PORTD |= (1<<PD7);	// digital 7 on the Arduino
     } else {
@@ -34,7 +34,7 @@ inline void set_laser( uint8_t state ) {
 
 
 // set control LED on pin 4 on / ogg
-inline void set_cLed4( uint8_t state ) {
+void set_cLed4( uint8_t state ) {
     if (state) {
 	PORTD |= (1<<PD4);	// digital 7 on the Arduino
     } else {
@@ -43,7 +43,7 @@ inline void set_cLed4( uint8_t state ) {
 }
 
 // set control LED on pin 5 on / ogg
-inline void set_cLed5( uint8_t state ) {
+void set_cLed5( uint8_t state ) {
     if (state) {
 	PORTD |= (1<<PD5);	// digital 7 on the Arduino
     } else {
@@ -52,7 +52,7 @@ inline void set_cLed5( uint8_t state ) {
 }
 
 // send a pulse to 'trigger' SLM
-static inline void send_trigger() {
+static void send_trigger() {
     PORTD |= (1<<PD2);
     _delay_us(50);
     PORTD &= ~(1<<PD2);
@@ -60,7 +60,7 @@ static inline void send_trigger() {
 
 
 // send a pulse to 'finish' SLM
-static inline void send_finish() {
+static void send_finish() {
     PORTD |= (1<<PD3);
     _delay_us(50);
     PORTD &= ~(1<<PD3);
