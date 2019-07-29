@@ -10,6 +10,7 @@
 
 static FILE uartstdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 
+uint8_t needs_reset = 1;
 
 // read the camera 'exposure' pin
 uint8_t read_camera() {
@@ -32,7 +33,10 @@ void set_laser( uint8_t state ) {
     }
 }
 
-
+// read SPO_3 (last in seq).
+uint8_t read_spo3() {
+    return (PINC & (1<<PC4));
+}
 
 
 // set control LED on pin 5 on / ogg
@@ -41,6 +45,15 @@ void set_cLed5( uint8_t state ) {
 	PORTD |= (1<<PD5);	// digital 5 on the Arduino
     } else {
 	PORTD &= ~(1<<PD5);
+    }
+}
+
+// set control LED on pin 5 on / ogg
+void set_cLed6( uint8_t state ) {
+    if (state) {
+	PORTD |= (1<<PD6);	// digital 5 on the Arduino
+    } else {
+	PORTD &= ~(1<<PD6);
     }
 }
 
@@ -60,6 +73,8 @@ static void send_finish() {
 }
 
 
+// forward definition of a function to reset the SLM
+static void reset_SLM_seq();
 
 int main() {
 
@@ -83,9 +98,20 @@ int main() {
     while (1) {
 
 	// wait for the camera to go to 'exposure'
-	set_cLed5(1);
-	while ( ! read_camera() ) {};	
-	set_cLed5(0);
+	set_cLed6(1);
+	uint32_t cam_timeout = 0;
+	while ( ! read_camera() ) {
+	    cam_timeout++;
+	    asm( "nop\n nop\n nop\n nop\n");	    
+	    asm( "nop\n nop\n nop\n nop\n");	    
+	    asm( "nop\n nop\n nop\n nop\n");	    
+	    if (cam_timeout > 200000 && needs_reset ) {
+		reset_SLM_seq();
+	    } 
+	};	
+	set_cLed6(0);
+
+	needs_reset = 1;
 
 	// trigger the SLM
 	send_trigger();
@@ -130,4 +156,39 @@ int main() {
 	
     }
 
+}
+
+
+static void reset_SLM_seq() {
+
+set_cLed5(1);
+
+    UDR0='R';
+    _delay_us(100);
+    uint8_t loop=1;
+
+    while (loop++) {
+	
+	send_trigger();
+	UDR0='t';
+	_delay_us(100);
+	if (loop%4==0) {
+	    send_finish();
+	}
+	
+	for (uint16_t i=0; i<600; i++) {
+	    if (!read_spo3()) {
+		loop=0;
+	    }
+	    _delay_us(10);	
+	}    
+    }
+    UDR0='d';
+    _delay_us(50);
+    UDR0='\n';
+    _delay_us(50);
+
+    needs_reset = 0;
+
+set_cLed5(0);
 }
