@@ -105,8 +105,11 @@ int main() {
 	    asm( "nop\n nop\n nop\n nop\n");	    
 	    asm( "nop\n nop\n nop\n nop\n");	    
 	    asm( "nop\n nop\n nop\n nop\n");	    
-	    if (cam_timeout > 200000 && needs_reset ) {
-		reset_SLM_seq();
+	    if (cam_timeout > 500000 ) {
+		if ( needs_reset ) {
+		    reset_SLM_seq();
+		} 
+		cam_timeout=0;
 	    } 
 	};	
 	set_cLed6(0);
@@ -164,29 +167,35 @@ static void reset_SLM_seq() {
 set_cLed5(1);
 
     UDR0='R';
-    _delay_us(100);
+    loop_until_bit_is_set(UCSR0A, UDRE0);
     uint8_t loop=1;
 
-    while (loop++) {
+    while (loop) {
 	
 	send_trigger();
 	UDR0='t';
-	_delay_us(100);
-	if (loop%4==0) {
-	    send_finish();
-	}
+	_delay_us(250);
 	
-	for (uint16_t i=0; i<600; i++) {
+	for (uint16_t i=0; i<10; i++) {
 	    if (!read_spo3()) {
+		UDR0='x';
 		loop=0;
+	    } else {
+		UDR0='.';
 	    }
-	    _delay_us(10);	
+	    _delay_us(250);	
 	}    
+	
+	send_finish();
+	_delay_us(2000);
     }
+    
     UDR0='d';
-    _delay_us(50);
+    loop_until_bit_is_set(UCSR0A, UDRE0);
     UDR0='\n';
-    _delay_us(50);
+    loop_until_bit_is_set(UCSR0A, UDRE0);
+    loop_until_bit_is_set(UCSR0A, UDRE0);
+    UDR0='\r';
 
     needs_reset = 0;
 
